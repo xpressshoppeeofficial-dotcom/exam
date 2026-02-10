@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Cheating Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .upload-section {
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8ecff;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .upload-text {
+            color: #333;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .upload-subtext {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        #videoInput {
+            display: none;
+        }
+        
+        .file-name {
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-analyze {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-analyze:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            flex: 1;
+        }
+        
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+        
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 10px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .result-status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .status-suspicious {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+        
+        .status-normal {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Exam Proctoring System</h1>
+        <p class="subtitle">AI-powered cheating detection using video analysis</p>
+        
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📹</div>
+                <div class="upload-text">Click to upload or drag and drop</div>
+                <div class="upload-subtext">MP4, AVI, MOV, MKV (Max 500MB)</div>
+                <div class="file-name" id="fileName"></div>
+            </div>
+            <input type="file" id="videoInput" accept="video/*">
+        </div>
+        
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div class="loading-text">Analyzing video...</div>
+            <div style="color: #999; font-size: 12px; margin-top: 5px;">This may take a few minutes</div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-analyze" id="analyzeBtn" disabled>Analyze Video</button>
+            <button class="btn-clear" id="clearBtn">Clear</button>
+        </div>
+        
+        <div class="error" id="errorMsg"></div>
+        
+        <div class="results" id="results">
+            <div class="result-title">Analysis Results</div>
+            <div class="result-status" id="statusMessage"></div>
+            
+            <div class="stat-row">
+                <span class="stat-label">Total Frames:</span>
+                <span class="stat-value" id="totalFrames">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Video Duration:</span>
+                <span class="stat-value" id="duration">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Cheating Frames:</span>
+                <span class="stat-value" id="cheatingFrames">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Cheating Percentage:</span>
+                <span class="stat-value" id="cheatingPercent">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Multiple Faces Detected:</span>
+                <span class="stat-value" id="multipleFaces">-</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Objects Detected (Phone/Book):</span>
+                <span class="stat-value" id="phoneDetected">-</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const videoInput = document.getElementById('videoInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const fileNameEl = document.getElementById('fileName');
+        const loader = document.getElementById('loader');
+        const results = document.getElementById('results');
+        const errorMsg = document.getElementById('errorMsg');
+        
+        let selectedFile = null;
+        
+        // File upload handling
+        uploadArea.addEventListener('click', () => videoInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+        
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+        
+        function handleFileSelect(file) {
+            selectedFile = file;
+            fileNameEl.textContent = `📄 ${file.name}`;
+            analyzeBtn.disabled = false;
+            results.classList.remove('show');
+            errorMsg.classList.remove('show');
+        }
+        
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            const formData = new FormData();
+            formData.append('video', selectedFile);
+            
+            loader.style.display = 'block';
+            analyzeBtn.disabled = true;
+            errorMsg.classList.remove('show');
+            results.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/analyze-video', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Analysis failed');
+                }
+            } catch (err) {
+                showError('Network error: ' + err.message);
+            } finally {
+                loader.style.display = 'none';
+                analyzeBtn.disabled = false;
+            }
+        });
+        
+        function displayResults(data) {
+            const summary = data.summary;
+            const status = summary.status === 'SUSPICIOUS' ? 'status-suspicious' : 'status-normal';
+            const statusText = summary.status === 'SUSPICIOUS' 
+                ? '⚠️ SUSPICIOUS - Potential cheating detected!' 
+                : '✅ NORMAL - No significant violations detected';
+            
+            document.getElementById('statusMessage').innerHTML = statusText;
+            document.getElementById('statusMessage').className = `result-status ${status}`;
+            document.getElementById('totalFrames').textContent = data.total_frames.toLocaleString();
+            document.getElementById('duration').textContent = summary.duration_seconds ? 
+                (summary.duration_seconds / 60).toFixed(2) + ' minutes' : 'N/A';
+            document.getElementById('cheatingFrames').textContent = summary.cheating_frames.toLocaleString();
+            document.getElementById('cheatingPercent').textContent = summary.cheating_percentage.toFixed(2) + '%';
+            document.getElementById('multipleFaces').textContent = summary.multiple_faces_count.toLocaleString();
+            document.getElementById('phoneDetected').textContent = summary.phone_detected_count.toLocaleString();
+            
+            results.classList.add('show');
+        }
+        
+        function showError(message) {
+            errorMsg.textContent = '❌ ' + message;
+            errorMsg.classList.add('show');
+        }
+        
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            videoInput.value = '';
+            fileNameEl.textContent = '';
+            analyzeBtn.disabled = true;
+            results.classList.remove('show');
+            errorMsg.classList.remove('show');
+        });
+    </script>
+</body>
+</html>

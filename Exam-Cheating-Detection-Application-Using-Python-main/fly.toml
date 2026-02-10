@@ -1,0 +1,23 @@
+# fly.toml app configuration
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+
+app = "exam-cheating-detection"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PYTHONUNBUFFERED = "1"
+
+[[services]]
+  internal_port = 8080
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+  
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
